@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en" class="theme-dark">
+<html lang="en" class="theme-light">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -269,7 +269,7 @@
 <div class="hero">
   <div class="typewriter-container">
     <div class="typewriter-text">
-      <span id="typeText1"></span><span id="typeText2" style="color: var(--accent);"></span><span class="cursor">█</span>
+      <span id="typeText1"></span><span id="typeText2" style="color: var(--error);"></span><span class="cursor">█</span>
     </div>
   </div>
   <p>Convert natural language product requirements into production-ready, cross-consistent JSON app schemas via a 4-stage AI pipeline.</p>
@@ -356,10 +356,10 @@ const themeToggle = document.getElementById('themeToggle');
 function toggleTheme() {
   if (html.classList.contains('theme-dark')) {
     html.classList.replace('theme-dark', 'theme-light');
-    themeToggle.textContent = '☀️';
+    themeToggle.textContent = '🌙';
   } else {
     html.classList.replace('theme-light', 'theme-dark');
-    themeToggle.textContent = '🌙';
+    themeToggle.textContent = '☀️';
   }
 }
 
