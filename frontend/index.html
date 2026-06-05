@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AppCompiler — Premium Dev Tools</title>
-<meta name="description" content="AppCompiler converts natural language into structured app configuration JSON.">
+<title>AppCompiler — Enterprise IDE Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   /* ─── THEME VARIABLES ─── */
   :root.theme-dark {
     --bg: #0d1117;
-    --surface: rgba(22, 27, 34, 0.7);
+    --surface: rgba(22, 27, 34, 0.6);
     --surface-hover: rgba(33, 38, 45, 0.8);
+    --surface-solid: #161b22;
     --border: rgba(48, 54, 61, 0.8);
     --text-primary: #e6edf3;
     --text-secondary: #8b949e;
@@ -30,15 +30,16 @@
     --json-key: #d2a8ff;
     
     /* Aurora */
-    --aurora-1: rgba(88, 166, 255, 0.15);
-    --aurora-2: rgba(210, 168, 255, 0.1);
-    --aurora-3: rgba(63, 185, 80, 0.1);
+    --aurora-1: rgba(88, 166, 255, 0.1);
+    --aurora-2: rgba(210, 168, 255, 0.08);
+    --aurora-3: rgba(63, 185, 80, 0.08);
   }
 
   :root.theme-light {
     --bg: #f6f8fa;
-    --surface: rgba(255, 255, 255, 0.8);
+    --surface: rgba(255, 255, 255, 0.7);
     --surface-hover: rgba(243, 244, 246, 0.9);
+    --surface-solid: #ffffff;
     --border: rgba(208, 215, 222, 0.8);
     --text-primary: #1f2328;
     --text-secondary: #656d76;
@@ -57,31 +58,25 @@
     --json-key: #8250df;
     
     /* Aurora */
-    --aurora-1: rgba(9, 105, 218, 0.08);
-    --aurora-2: rgba(130, 80, 223, 0.05);
-    --aurora-3: rgba(26, 127, 55, 0.05);
+    --aurora-1: rgba(9, 105, 218, 0.06);
+    --aurora-2: rgba(130, 80, 223, 0.04);
+    --aurora-3: rgba(26, 127, 55, 0.04);
   }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.3s, border-color 0.3s; }
-  html { scroll-behavior: smooth; }
-
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.3s, border-color 0.3s, color 0.3s; }
+  
   body {
-    background: var(--bg);
-    color: var(--text-primary);
-    font-family: 'Inter', sans-serif;
-    min-height: 100vh;
-    overflow-x: hidden;
-    position: relative;
+    background: var(--bg); color: var(--text-primary); font-family: 'Inter', sans-serif;
+    height: 100vh; overflow: hidden; display: flex; flex-direction: column;
   }
 
-  /* ─── AURORA BACKGROUND ─── */
+  /* ─── BACKGROUND ─── */
   .aurora-bg {
     position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
-    z-index: -1; overflow: hidden; pointer-events: none;
-    background: var(--bg);
+    z-index: -1; overflow: hidden; pointer-events: none; background: var(--bg);
   }
   .aurora-blob {
-    position: absolute; border-radius: 50%; filter: blur(80px);
+    position: absolute; border-radius: 50%; filter: blur(90px);
     animation: floatBlob 20s infinite alternate ease-in-out;
   }
   .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--aurora-1); animation-delay: 0s; }
@@ -94,160 +89,172 @@
     100% { transform: translate(-5%, -10%) scale(0.9); }
   }
 
-  /* ─── HEADER ─── */
-  .header {
-    padding: 1.2rem 2rem;
-    display: flex; align-items: center; justify-content: space-between;
-    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-    border-bottom: 1px solid var(--border);
-    position: sticky; top: 0; z-index: 100;
+  /* ─── HEADER BAR ─── */
+  .topbar {
+    height: 50px; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 1.5rem; border-bottom: 1px solid var(--border);
+    background: var(--surface); backdrop-filter: blur(10px); z-index: 100;
   }
-  .logo { display: flex; align-items: center; gap: 0.75rem; font-weight: 600; font-size: 1.1rem; }
+  .logo { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; font-size: 0.9rem; }
   .logo-icon { 
-    width: 28px; height: 28px; background: var(--accent); color: #fff;
-    display: flex; align-items: center; justify-content: center; border-radius: 6px;
-    font-family: 'Fira Code', monospace; font-size: 14px; font-weight: 800;
+    width: 22px; height: 22px; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; border-radius: 4px;
+    font-family: 'Fira Code', monospace; font-size: 11px; font-weight: 800;
   }
+  .nav-center { display: flex; gap: 1.5rem; font-size: 0.8rem; color: var(--text-secondary); font-weight: 500; }
+  .nav-item.active { color: var(--text-primary); border-bottom: 2px solid var(--accent); padding: 15px 0; }
   .theme-toggle {
-    background: var(--surface); border: 1px solid var(--border); color: var(--text-primary);
-    width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
-    font-size: 1.1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    background: transparent; border: none; color: var(--text-secondary);
+    cursor: pointer; font-size: 1.1rem; padding: 0.5rem;
   }
-  .theme-toggle:hover { background: var(--surface-hover); }
+  .theme-toggle:hover { color: var(--text-primary); }
 
-  /* ─── HERO & TYPEWRITER ─── */
-  .hero { text-align: center; padding: 5rem 1.5rem 3rem; }
+  /* ─── MAIN LAYOUT ─── */
+  .app-layout {
+    display: flex; flex: 1; height: calc(100vh - 50px); overflow: hidden;
+  }
+
+  /* ─── LEFT SIDEBAR (MOCK) ─── */
+  .sidebar {
+    width: 260px; border-right: 1px solid var(--border); background: var(--surface);
+    backdrop-filter: blur(10px); display: flex; flex-direction: column;
+  }
+  .sidebar-section { padding: 1rem; border-bottom: 1px solid var(--border); }
+  .sidebar-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); font-weight: 600; margin-bottom: 0.8rem; }
+  .sidebar-item {
+    font-size: 0.8rem; padding: 0.5rem; border-radius: 6px; color: var(--text-primary);
+    display: flex; align-items: center; gap: 0.5rem; cursor: pointer; margin-bottom: 0.2rem;
+  }
+  .sidebar-item:hover { background: var(--surface-hover); }
+  .sidebar-item.active { background: var(--accent-glow); color: var(--accent); }
+  .sidebar-icon { font-size: 0.9rem; opacity: 0.7; }
+
+  /* ─── CENTER ENGINE ─── */
+  .engine {
+    flex: 1; min-width: 400px; display: flex; flex-direction: column;
+    padding: 2rem; overflow-y: auto; position: relative;
+  }
   
-  .typewriter-container {
-    font-size: clamp(2rem, 4.5vw, 3.5rem);
-    font-weight: 700;
-    letter-spacing: -1px;
-    margin-bottom: 1rem;
-    min-height: 4.5rem;
-    display: flex; justify-content: center; align-items: center;
-  }
-  .typewriter-text {
-    background: linear-gradient(90deg, var(--text-primary), var(--text-secondary));
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  }
-  .cursor {
-    display: inline-block; width: 0.5em; height: 1em; background: var(--accent);
-    margin-left: 0.2rem; vertical-align: middle; animation: blink 1s step-end infinite;
-  }
+  .typewriter-container { font-size: 1.8rem; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 0.5rem; display: flex; align-items: center; min-height: 2.2rem;}
+  .typewriter-text { color: var(--text-primary); }
+  .cursor { display: inline-block; width: 0.4em; height: 1em; background: var(--accent); margin-left: 0.2rem; animation: blink 1s step-end infinite; }
   @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
-
-  .hero p { color: var(--text-secondary); font-size: 1.05rem; max-width: 600px; margin: 0 auto; line-height: 1.6; }
-
-  /* ─── CONTAINER & GLASS PANELS ─── */
-  .container { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 5rem; }
+  
+  .engine-desc { color: var(--text-secondary); font-size: 0.9rem; line-height: 1.5; margin-bottom: 2rem; max-width: 500px; }
 
   .panel {
-    background: var(--surface);
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 1.5rem;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
-    margin-bottom: 1.5rem;
-    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    opacity: 0; transform: translateY(20px);
+    background: var(--surface); backdrop-filter: blur(12px); border: 1px solid var(--border);
+    border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.05);
   }
-  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
-
   .panel-header {
-    font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
-    color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.75rem; font-weight: 600; text-transform: uppercase; color: var(--text-secondary);
+    margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
   }
   .panel-header::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
 
-  /* ─── INPUT AREA ─── */
   textarea {
-    width: 100%; background: transparent; border: 1px solid var(--border); border-radius: 8px;
-    color: var(--text-primary); font-family: 'Fira Code', monospace; font-size: 0.9rem;
-    padding: 1rem; min-height: 120px; resize: vertical; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+    width: 100%; background: var(--bg); border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text-primary); font-family: 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.5;
+    padding: 1rem; min-height: 120px; resize: vertical; outline: none;
   }
-  textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); background: var(--surface-hover); }
+  textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-glow); }
 
-  .action-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 1rem; }
-  
-  .presets { display: flex; gap: 0.5rem; }
+  .presets { display: flex; gap: 0.5rem; margin-top: 1rem; }
   .preset-btn {
-    background: var(--bg); border: 1px solid var(--border); color: var(--text-secondary);
-    font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif;
+    background: var(--surface-solid); border: 1px solid var(--border); color: var(--text-secondary);
+    font-size: 0.7rem; padding: 0.3rem 0.6rem; border-radius: 4px; cursor: pointer;
   }
   .preset-btn:hover { color: var(--text-primary); border-color: var(--text-secondary); }
 
   .generate-btn {
     background: var(--accent); color: #fff; border: none; font-weight: 600; font-family: 'Inter', sans-serif;
-    padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
-    display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px var(--accent-glow); transition: transform 0.1s, box-shadow 0.2s;
+    padding: 0.8rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem; width: 100%;
+    display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-top: 1.5rem;
+    box-shadow: 0 4px 12px var(--accent-glow);
   }
   .generate-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px var(--accent-glow); }
-  .generate-btn:active { transform: translateY(1px); }
   .generate-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
-  /* ─── PIPELINE STAGES ─── */
-  .pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-  .stage {
-    border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center;
-    background: var(--bg); position: relative; overflow: hidden; transition: border-color 0.3s;
+  /* Complex Pipeline */
+  .pipeline-grid { display: grid; gap: 1rem; }
+  .p-stage {
+    display: flex; align-items: center; gap: 1rem; padding: 1rem;
+    border: 1px solid var(--border); border-radius: 8px; background: var(--bg);
+    position: relative; overflow: hidden;
   }
-  .stage-icon { font-size: 1.2rem; margin-bottom: 0.5rem; opacity: 0.5; }
-  .stage-name { font-size: 0.75rem; font-weight: 600; margin-bottom: 0.25rem; color: var(--text-primary); }
-  .stage-status { font-size: 0.65rem; color: var(--text-secondary); font-family: 'Fira Code', monospace; }
+  .p-icon { width: 32px; height: 32px; border-radius: 8px; background: var(--surface-hover); display: flex; align-items: center; justify-content: center; font-size: 1rem; }
+  .p-info { flex: 1; }
+  .p-title { font-size: 0.85rem; font-weight: 600; color: var(--text-primary); margin-bottom: 0.2rem; }
+  .p-status { font-family: 'Fira Code', monospace; font-size: 0.65rem; color: var(--text-secondary); }
+  .p-progress { width: 100%; height: 2px; background: var(--border); margin-top: 0.5rem; border-radius: 2px; overflow: hidden; }
+  .p-fill { width: 0%; height: 100%; background: var(--accent); transition: width 0.3s; }
 
-  .stage.active { border-color: var(--accent); }
-  .stage.active .stage-icon { opacity: 1; color: var(--accent); animation: pulse 2s infinite; }
-  .stage.active .stage-status { color: var(--accent); }
-  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.95); } }
+  .p-stage.active { border-color: var(--accent); }
+  .p-stage.active .p-icon { background: var(--accent-glow); color: var(--accent); }
+  .p-stage.active .p-status { color: var(--accent); }
+  .p-stage.active .p-fill { width: 100%; transition: width 4s linear; }
 
-  .stage.done { border-color: var(--success); }
-  .stage.done .stage-icon { opacity: 1; color: var(--success); }
-  .stage.done .stage-status { color: var(--success); }
+  .p-stage.done { border-color: var(--success); }
+  .p-stage.done .p-icon { background: var(--success-bg); color: var(--success); }
+  .p-stage.done .p-status { color: var(--success); }
+  .p-stage.done .p-fill { width: 100%; background: var(--success); }
 
-  .stage.error { border-color: var(--error); }
-  .stage.error .stage-icon { opacity: 1; color: var(--error); }
-  .stage.error .stage-status { color: var(--error); }
+  .p-stage.error { border-color: var(--error); }
+  .p-stage.error .p-icon { background: var(--error-bg); color: var(--error); }
+  .p-stage.error .p-status { color: var(--error); }
+  .p-stage.error .p-fill { width: 100%; background: var(--error); }
 
-  /* ─── OUTPUT SECTION ─── */
-  .output-section { display: none; }
-  .output-section.show { display: block; animation: fadeUp 0.5s ease forwards; }
+  /* ─── RIGHT OUTPUT VIEWER ─── */
+  .output {
+    width: 45%; min-width: 500px; border-left: 1px solid var(--border); background: var(--surface-solid);
+    display: flex; flex-direction: column; z-index: 10;
+  }
+  
+  .output-header { padding: 1.5rem; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .output-title { font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem; }
+  
+  .dense-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin-bottom: 1rem; }
+  .d-stat { background: var(--bg); border: 1px solid var(--border); padding: 0.8rem; border-radius: 6px; }
+  .d-val { font-size: 1.2rem; font-family: 'Fira Code', monospace; font-weight: 700; color: var(--text-primary); }
+  .d-lbl { font-size: 0.6rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 600; margin-top: 0.2rem; }
 
-  .tabs { display: flex; gap: 0.2rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; overflow-x: auto; }
-  .tab-btn {
-    background: transparent; border: none; padding: 0.6rem 1rem; font-size: 0.8rem; font-family: 'Fira Code', monospace;
+  .badges { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .badge { font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 600; text-transform: uppercase; border: 1px solid transparent; }
+  .badge.pass { background: var(--success-bg); color: var(--success); border-color: rgba(63,185,80,0.2); }
+  .badge.warn { background: var(--error-bg); color: var(--error); border-color: rgba(248,81,73,0.2); }
+  .badge.info { background: var(--accent-glow); color: var(--accent); border-color: rgba(88,166,255,0.2); }
+
+  .output-tabs { display: flex; border-bottom: 1px solid var(--border); background: var(--surface); }
+  .o-tab {
+    padding: 0.8rem 1.2rem; font-size: 0.75rem; font-family: 'Fira Code', monospace;
     color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
   }
-  .tab-btn:hover { color: var(--text-primary); background: var(--bg); border-radius: 6px 6px 0 0; }
-  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .o-tab:hover { color: var(--text-primary); background: var(--surface-hover); }
+  .o-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  
+  .output-actions { margin-left: auto; display: flex; align-items: center; padding-right: 1rem; }
 
+  .json-container { flex: 1; overflow: auto; background: var(--surface-solid); padding: 0; position: relative; }
   .json-viewer {
-    background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem;
-    font-family: 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.6; color: var(--text-primary);
-    overflow-x: auto; max-height: 500px;
+    font-family: 'Fira Code', monospace; font-size: 0.8rem; line-height: 1.6;
+    padding: 1.5rem; color: var(--text-primary); margin: 0;
   }
-
+  .json-line { display: block; }
+  
+  /* Syntax Highlighting */
   .str { color: var(--json-str); }
   .num { color: var(--json-num); }
   .bool { color: var(--json-bool); }
   .null { color: var(--json-null); font-style: italic; }
   .key { color: var(--json-key); }
 
-  .stats-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
-  .stat-card { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
-  .stat-val { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); font-family: 'Fira Code', monospace; }
-  .stat-label { font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-top: 0.25rem; font-weight: 600; }
-
-  .badges { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
-  .badge { font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; }
-  .badge.pass { background: var(--success-bg); color: var(--success); }
-  .badge.warn { background: var(--error-bg); color: var(--error); }
-  .badge.info { background: var(--accent-glow); color: var(--accent); }
-
-  @media (max-width: 768px) {
-    .pipeline { grid-template-columns: repeat(2, 1fr); }
-    .action-row { flex-direction: column; align-items: stretch; }
-    .generate-btn { justify-content: center; }
+  @media (max-width: 1000px) {
+    .sidebar { display: none; }
+  }
+  @media (max-width: 800px) {
+    .app-layout { flex-direction: column; overflow: auto; height: auto; }
+    .engine { min-width: 100%; overflow: visible; }
+    .output { width: 100%; min-width: 100%; border-left: none; border-top: 1px solid var(--border); min-height: 500px; }
   }
 </style>
 </head>
@@ -259,92 +266,138 @@
   <div class="aurora-blob blob-3"></div>
 </div>
 
-<header class="header">
+<!-- TOP NAVBAR -->
+<div class="topbar">
   <div class="logo">
-    <div class="logo-icon">&lt;/&gt;</div>
-    AppCompiler
+    <div class="logo-icon">&lt;/&gt;</div> AppCompiler Enterprise
   </div>
-  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle Theme">🌙</button>
-</header>
-
-<div class="hero">
-  <div class="typewriter-container">
-    <span class="typewriter-text" id="typeText"></span><span class="cursor">█</span>
+  <div class="nav-center">
+    <div class="nav-item active">Compiler Engine</div>
+    <div class="nav-item">Evaluation Suite</div>
+    <div class="nav-item">Documentation</div>
   </div>
-  <p>Convert natural language product requirements into production-ready, cross-consistent JSON app schemas via a 4-stage AI pipeline.</p>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" title="Toggle Theme">🌙</button>
 </div>
 
-<div class="container">
+<div class="app-layout">
   
-  <div class="panel" style="animation-delay: 0.2s">
-    <div class="panel-header">System Input</div>
-    <textarea id="prompt" placeholder="Write your prompt here or select a preset below..."></textarea>
-    
-    <div class="action-row">
+  <!-- LEFT SIDEBAR (MOCK) -->
+  <aside class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-title">Workspace</div>
+      <div class="sidebar-item active"><span class="sidebar-icon">⚡</span> New Compilation</div>
+      <div class="sidebar-item"><span class="sidebar-icon">📂</span> Saved Schemas</div>
+      <div class="sidebar-item"><span class="sidebar-icon">📊</span> Analytics</div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-title">Recent Generations</div>
+      <div class="sidebar-item"><span class="sidebar-icon">📄</span> crm_platform.json</div>
+      <div class="sidebar-item"><span class="sidebar-icon">📄</span> crypto_wallet.json</div>
+      <div class="sidebar-item"><span class="sidebar-icon">📄</span> healthcare_app.json</div>
+    </div>
+    <div style="margin-top:auto; padding: 1rem; border-top: 1px solid var(--border);">
+      <div class="sidebar-item"><span class="sidebar-icon">⚙</span> Settings</div>
+      <div class="sidebar-item"><span class="sidebar-icon">🔑</span> API Keys</div>
+    </div>
+  </aside>
+
+  <!-- CENTER ENGINE -->
+  <main class="engine">
+    <div class="typewriter-container">
+      <span class="typewriter-text" id="typeText"></span><span class="cursor">█</span>
+    </div>
+    <div class="engine-desc">
+      Input product requirements to initialize the 4-stage neural pipeline. Engine will extract intent, map architecture, synthesize schema, and auto-repair validations.
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">Terminal Input</div>
+      <textarea id="prompt" placeholder="Write your requirements here..."></textarea>
+      
       <div class="presets">
-        <button class="preset-btn" onclick="setPreset('crm')">CRM</button>
+        <span style="font-size: 0.7rem; color: var(--text-secondary); margin-top: 0.3rem;">PRESETS:</span>
+        <button class="preset-btn" onclick="setPreset('crm')">CRM System</button>
         <button class="preset-btn" onclick="setPreset('ecommerce')">E-Commerce</button>
-        <button class="preset-btn" onclick="setPreset('dashboard')">Dashboard</button>
+        <button class="preset-btn" onclick="setPreset('dashboard')">SaaS Dashboard</button>
       </div>
+
       <button class="generate-btn" id="genBtn" onclick="generate()">
-        <span id="genBtnIcon">▶</span>
-        <span id="genBtnText">Compile Schema</span>
+        <span id="genBtnIcon">▶</span> <span id="genBtnText">Execute Compilation</span>
       </button>
     </div>
-  </div>
 
-  <div class="panel" style="animation-delay: 0.3s">
-    <div class="panel-header">Pipeline Diagnostics</div>
-    <div class="pipeline">
-      <div class="stage" id="s1">
-        <div class="stage-icon">🔍</div>
-        <div class="stage-name">Intent Extraction</div>
-        <div class="stage-status" id="s1-status">idle</div>
-      </div>
-      <div class="stage" id="s2">
-        <div class="stage-icon">🏗</div>
-        <div class="stage-name">Architecture</div>
-        <div class="stage-status" id="s2-status">idle</div>
-      </div>
-      <div class="stage" id="s3">
-        <div class="stage-icon">⚡</div>
-        <div class="stage-name">Generation</div>
-        <div class="stage-status" id="s3-status">idle</div>
-      </div>
-      <div class="stage" id="s4">
-        <div class="stage-icon">🛡</div>
-        <div class="stage-name">Validation</div>
-        <div class="stage-status" id="s4-status">idle</div>
-      </div>
-    </div>
-  </div>
-
-  <div class="output-section" id="outputSection">
     <div class="panel">
-      <div class="panel-header">Compilation Report</div>
-      
-      <div class="badges" id="reportBadges"></div>
-      
-      <div class="stats-row">
-        <div class="stat-card"><div class="stat-val" id="stat-pages">0</div><div class="stat-label">UI Pages</div></div>
-        <div class="stat-card"><div class="stat-val" id="stat-routes">0</div><div class="stat-label">API Routes</div></div>
-        <div class="stat-card"><div class="stat-val" id="stat-tables">0</div><div class="stat-label">DB Tables</div></div>
-        <div class="stat-card"><div class="stat-val" id="stat-roles">0</div><div class="stat-label">Auth Roles</div></div>
-      </div>
-
-      <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 1px solid var(--border); margin-bottom:1rem;">
-        <div class="tabs">
-          <button class="tab-btn active" onclick="switchTab('all', this)">full_schema.json</button>
-          <button class="tab-btn" onclick="switchTab('ui', this)">ui.json</button>
-          <button class="tab-btn" onclick="switchTab('api', this)">api.json</button>
-          <button class="tab-btn" onclick="switchTab('db', this)">db.json</button>
+      <div class="panel-header">Pipeline Execution Map</div>
+      <div class="pipeline-grid">
+        <div class="p-stage" id="s1">
+          <div class="p-icon">1</div>
+          <div class="p-info">
+            <div class="p-title">Intent Extraction Phase</div>
+            <div class="p-status" id="s1-status">IDLE - Waiting for input</div>
+            <div class="p-progress"><div class="p-fill"></div></div>
+          </div>
         </div>
-        <button class="preset-btn" id="copyBtn" onclick="copyJSON()" style="margin-bottom:0.4rem;">Copy JSON</button>
+        <div class="p-stage" id="s2">
+          <div class="p-icon">2</div>
+          <div class="p-info">
+            <div class="p-title">System Architecture Design</div>
+            <div class="p-status" id="s2-status">IDLE - Dependency locked</div>
+            <div class="p-progress"><div class="p-fill"></div></div>
+          </div>
+        </div>
+        <div class="p-stage" id="s3">
+          <div class="p-icon">3</div>
+          <div class="p-info">
+            <div class="p-title">Schema Generation</div>
+            <div class="p-status" id="s3-status">IDLE - Dependency locked</div>
+            <div class="p-progress"><div class="p-fill"></div></div>
+          </div>
+        </div>
+        <div class="p-stage" id="s4">
+          <div class="p-icon">4</div>
+          <div class="p-info">
+            <div class="p-title">Validation & Repair Engine</div>
+            <div class="p-status" id="s4-status">IDLE - Dependency locked</div>
+            <div class="p-progress"><div class="p-fill"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- RIGHT OUTPUT -->
+  <aside class="output">
+    <div class="output-header">
+      <div class="output-title">Compilation Output</div>
+      
+      <div class="dense-stats">
+        <div class="d-stat"><div class="d-val" id="stat-pages">-</div><div class="d-lbl">UI Pages</div></div>
+        <div class="d-stat"><div class="d-val" id="stat-routes">-</div><div class="d-lbl">API Routes</div></div>
+        <div class="d-stat"><div class="d-val" id="stat-tables">-</div><div class="d-lbl">DB Tables</div></div>
+        <div class="d-stat"><div class="d-val" id="stat-roles">-</div><div class="d-lbl">Auth Roles</div></div>
       </div>
 
-      <pre class="json-viewer" id="jsonOut">// OUTPUT</pre>
+      <div class="badges" id="reportBadges">
+        <span class="badge info">System Standby</span>
+      </div>
     </div>
-  </div>
+
+    <div class="output-tabs">
+      <button class="o-tab active" onclick="switchTab('all', this)">full_schema.json</button>
+      <button class="o-tab" onclick="switchTab('ui', this)">ui.json</button>
+      <button class="o-tab" onclick="switchTab('api', this)">api.json</button>
+      <button class="o-tab" onclick="switchTab('db', this)">db.json</button>
+      
+      <div class="output-actions">
+        <button class="preset-btn" id="copyBtn" onclick="copyJSON()">Copy</button>
+        <button class="preset-btn" style="margin-left:0.5rem;" onclick="downloadJSON()">Download</button>
+      </div>
+    </div>
+
+    <div class="json-container">
+      <pre class="json-viewer" id="jsonOut">// OUTPUT WILL APPEAR HERE</pre>
+    </div>
+  </aside>
 
 </div>
 
@@ -363,7 +416,7 @@ function toggleTheme() {
 }
 
 // ─── TYPEWRITER EFFECT ───
-const typeText = "Describe your app.";
+const typeText = "Initialize Engine.";
 const typeEl = document.getElementById('typeText');
 let charIdx = 0;
 function typeWriter() {
@@ -393,7 +446,7 @@ function setPreset(key) {
 function setStage(num, status, text) {
   const el = document.getElementById('s' + num);
   const statusEl = document.getElementById('s' + num + '-status');
-  el.className = 'stage ' + status;
+  el.className = 'p-stage ' + status;
   statusEl.textContent = text;
 }
 
@@ -411,7 +464,7 @@ function syntaxHighlight(json) {
 
 function switchTab(tab, btnEl) {
   currentTab = tab;
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.o-tab').forEach(b => b.classList.remove('active'));
   btnEl.classList.add('active');
   
   if (!currentData || !currentData.finalSchema) return;
@@ -436,13 +489,12 @@ async function generate() {
   document.getElementById('genBtnIcon').textContent = '⏳';
   document.getElementById('genBtnText').textContent = 'Compiling...';
 
-  [1,2,3,4].forEach(n => setStage(n, '', 'idle'));
-  document.getElementById('outputSection').className = 'output-section';
+  [1,2,3,4].forEach(n => setStage(n, '', 'IDLE - Pending dependency'));
 
-  setStage(1, 'active', 'running');
-  stageTimers.push(setTimeout(() => { setStage(1, 'done', 'done'); setStage(2, 'active', 'running'); }, 3500));
-  stageTimers.push(setTimeout(() => { setStage(2, 'done', 'done'); setStage(3, 'active', 'running'); }, 8000));
-  stageTimers.push(setTimeout(() => { setStage(3, 'done', 'done'); setStage(4, 'active', 'running'); }, 13000));
+  setStage(1, 'active', 'PROCESSING - Analyzing syntax');
+  stageTimers.push(setTimeout(() => { setStage(1, 'done', 'OK - Intent mapped'); setStage(2, 'active', 'PROCESSING - Constructing layout'); }, 3500));
+  stageTimers.push(setTimeout(() => { setStage(2, 'done', 'OK - Architecture defined'); setStage(3, 'active', 'PROCESSING - Generating JSON nodes'); }, 8000));
+  stageTimers.push(setTimeout(() => { setStage(3, 'done', 'OK - Schema written'); setStage(4, 'active', 'PROCESSING - Running integrity checks'); }, 13000));
 
   try {
     const res = await fetch(`${API_BASE}/generate`, {
@@ -457,18 +509,17 @@ async function generate() {
 
     if (data.error) {
       const stageNum = data.stage || 4;
-      for (let i = 1; i < stageNum; i++) setStage(i, 'done', 'done');
-      setStage(stageNum, 'error', 'failed');
+      for (let i = 1; i < stageNum; i++) setStage(i, 'done', 'OK');
+      setStage(stageNum, 'error', 'FAIL - Error occurred');
       document.getElementById('jsonOut').innerHTML = `<span class="error">Error: ${data.error}</span>`;
-      document.getElementById('outputSection').className = 'output-section show';
     } else {
-      [1,2,3,4].forEach(n => setStage(n, 'done', 'done'));
+      [1,2,3,4].forEach(n => setStage(n, 'done', 'OK - Phase complete'));
       currentData = data;
 
       let badgesHtml = '';
-      badgesHtml += `<span class="badge ${data.validated ? 'pass' : 'warn'}">${data.validated ? '✓ Validated' : '⚠ Repaired'}</span>`;
-      badgesHtml += `<span class="badge ${!data.issues?.length ? 'pass' : 'warn'}">${!data.issues?.length ? '✓ 0 Issues' : `⚠ ${data.issues.length} Fixes`}</span>`;
-      badgesHtml += `<span class="badge info">llama-3.3-70b</span>`;
+      badgesHtml += `<span class="badge ${data.validated ? 'pass' : 'warn'}">${data.validated ? '✓ VALIDATED' : '⚠ REPAIRED'}</span>`;
+      badgesHtml += `<span class="badge ${!data.issues?.length ? 'pass' : 'warn'}">${!data.issues?.length ? '✓ 0 ISSUES' : `⚠ ${data.issues.length} FIXES`}</span>`;
+      badgesHtml += `<span class="badge info">MODEL: 70B</span>`;
       document.getElementById('reportBadges').innerHTML = badgesHtml;
 
       const s = data.finalSchema || {};
@@ -478,19 +529,17 @@ async function generate() {
       document.getElementById('stat-roles').textContent = s.authSchema?.roles?.length ?? 0;
 
       document.getElementById('jsonOut').innerHTML = syntaxHighlight(data.finalSchema);
-      document.getElementById('outputSection').className = 'output-section show';
     }
   } catch (e) {
     stageTimers.forEach(t => clearTimeout(t));
     stageTimers = [];
-    setStage(4, 'error', 'failed');
+    setStage(4, 'error', 'FAIL - Connection lost');
     document.getElementById('jsonOut').innerHTML = `<span class="error">Network Error: ${e.message}</span>`;
-    document.getElementById('outputSection').className = 'output-section show';
   }
 
   btn.disabled = false;
   document.getElementById('genBtnIcon').textContent = '▶';
-  document.getElementById('genBtnText').textContent = 'Compile Schema';
+  document.getElementById('genBtnText').textContent = 'Execute Compilation';
 }
 
 function copyJSON() {
@@ -500,8 +549,15 @@ function copyJSON() {
   navigator.clipboard.writeText(JSON.stringify(obj, null, 2)).then(() => {
     const btn = document.getElementById('copyBtn');
     btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy JSON', 1500);
+    setTimeout(() => btn.textContent = 'Copy', 1500);
   });
+}
+function downloadJSON() {
+  if (!currentData) return;
+  const blob = new Blob([JSON.stringify(currentData.finalSchema, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'app-schema.json'; a.click(); URL.revokeObjectURL(url);
 }
 </script>
 </body>
