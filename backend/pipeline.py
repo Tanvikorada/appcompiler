@@ -20,6 +20,7 @@ def call_groq(prompt: str) -> str:
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2,
             max_tokens=4000,
+            response_format={"type": "json_object"},
         )
         return response.choices[0].message.content
 
@@ -29,6 +30,7 @@ def call_groq(prompt: str) -> str:
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2,
             max_tokens=4000,
+            response_format={"type": "json_object"},
         )
         return response.choices[0].message.content
     except RateLimitError as e:
@@ -39,6 +41,7 @@ def call_groq(prompt: str) -> str:
             messages=[{"role": "user", "content": prompt}],
             temperature=0.2,
             max_tokens=4000,
+            response_format={"type": "json_object"},
         )
         return response.choices[0].message.content
 
