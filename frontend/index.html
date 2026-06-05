@@ -5,23 +5,23 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>AppCompiler — NL → App Schema</title>
 <meta name="description" content="AppCompiler converts natural language product descriptions into structured, validated, executable app configuration JSON via a 4-stage AI pipeline.">
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Almarai:wght@300;400;700;800&family=Instrument+Serif:ital@1&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #07070f;
-    --surface: #0f0f1a;
-    --surface2: #141424;
-    --border: #1c1c30;
-    --border2: #252540;
-    --accent: #7c6af7;
-    --accent-glow: rgba(124,106,247,0.25);
-    --accent2: #f7c56a;
-    --accent2-glow: rgba(247,197,106,0.2);
-    --text: #eaeaf8;
-    --text2: #a8a8cc;
-    --muted: #5a5a82;
-    --success: #4ade80;
-    --success-bg: rgba(74,222,128,0.07);
+    --bg: #000000;
+    --surface: #101010;
+    --surface2: #212121;
+    --border: #333333;
+    --border2: #444444;
+    --accent: #DEDBC8;
+    --accent-glow: rgba(222, 219, 200, 0.15);
+    --accent2: #E1E0CC;
+    --accent2-glow: rgba(225, 224, 204, 0.1);
+    --text: #E1E0CC;
+    --text2: #9ca3af;
+    --muted: #6b7280;
+    --success: #DEDBC8;
+    --success-bg: rgba(222, 219, 200, 0.05);
     --error: #f87171;
     --error-bg: rgba(248,113,113,0.07);
     --warn: #fbbf24;
@@ -36,9 +36,23 @@
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: 'Syne', sans-serif;
+    font-family: 'Almarai', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
+  }
+  
+  /* Noise overlay utility */
+  .bg-noise {
+    position: relative;
+  }
+  .bg-noise::after {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 1;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
   }
 
   /* Ambient background effect */
@@ -563,7 +577,7 @@
   }
 </style>
 </head>
-<body>
+<body class="bg-noise">
 
 <!-- ─── HEADER ─── -->
 <header class="header">
