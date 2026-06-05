@@ -127,13 +127,7 @@
     display: flex; justify-content: center; align-items: center;
   }
   .typewriter-text {
-    background: linear-gradient(90deg, var(--accent), #d2a8ff, var(--success), var(--accent));
-    background-size: 200% auto;
-    animation: textShimmer 4s linear infinite;
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-  }
-  @keyframes textShimmer {
-    to { background-position: 200% center; }
+    color: var(--text-primary);
   }
   .cursor {
     display: inline-block; width: 0.5em; height: 1em; background: var(--accent);
@@ -274,7 +268,9 @@
 
 <div class="hero">
   <div class="typewriter-container">
-    <span class="typewriter-text" id="typeText"></span><span class="cursor">█</span>
+    <div class="typewriter-text">
+      <span id="typeText1"></span><span id="typeText2" style="color: var(--accent);"></span><span class="cursor">█</span>
+    </div>
   </div>
   <p>Convert natural language product requirements into production-ready, cross-consistent JSON app schemas via a 4-stage AI pipeline.</p>
 </div>
@@ -368,13 +364,21 @@ function toggleTheme() {
 }
 
 // ─── TYPEWRITER EFFECT ───
-const typeText = "Describe your app.";
-const typeEl = document.getElementById('typeText');
-let charIdx = 0;
+const t1 = "Describe your ";
+const t2 = "idea.";
+const el1 = document.getElementById('typeText1');
+const el2 = document.getElementById('typeText2');
+let charIdx1 = 0;
+let charIdx2 = 0;
+
 function typeWriter() {
-  if (charIdx < typeText.length) {
-    typeEl.textContent += typeText.charAt(charIdx);
-    charIdx++;
+  if (charIdx1 < t1.length) {
+    el1.textContent += t1.charAt(charIdx1);
+    charIdx1++;
+    setTimeout(typeWriter, Math.random() * 50 + 50);
+  } else if (charIdx2 < t2.length) {
+    el2.textContent += t2.charAt(charIdx2);
+    charIdx2++;
     setTimeout(typeWriter, Math.random() * 50 + 50);
   } else {
     const cursorEl = document.querySelector('.cursor');
