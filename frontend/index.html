@@ -1,449 +1,391 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="theme-dark">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AppCompiler — AI Mainframe HUD</title>
-<meta name="description" content="AppCompiler converts natural language product descriptions into structured, validated, executable app configuration JSON via a 4-stage AI pipeline.">
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=JetBrains+Mono:wght@400;600;800&display=swap" rel="stylesheet">
+<title>AppCompiler — Premium Dev Tools</title>
+<meta name="description" content="AppCompiler converts natural language into structured app configuration JSON.">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #030305;
-    --cyan: #00f3ff;
-    --magenta: #bc13fe;
-    --green: #0f0;
-    --red: #ff003c;
-    --glass: rgba(0, 243, 255, 0.03);
-    --border: rgba(0, 243, 255, 0.3);
-    --text-glow: 0 0 10px rgba(0, 243, 255, 0.8);
-    --panel-glow: inset 0 0 20px rgba(0, 243, 255, 0.05);
+  /* ─── THEME VARIABLES ─── */
+  :root.theme-dark {
+    --bg: #0d1117;
+    --surface: rgba(22, 27, 34, 0.7);
+    --surface-hover: rgba(33, 38, 45, 0.8);
+    --border: rgba(48, 54, 61, 0.8);
+    --text-primary: #e6edf3;
+    --text-secondary: #8b949e;
+    --accent: #58a6ff;
+    --accent-glow: rgba(88, 166, 255, 0.2);
+    --success: #3fb950;
+    --success-bg: rgba(63, 185, 80, 0.1);
+    --error: #f85149;
+    --error-bg: rgba(248, 81, 73, 0.1);
+    
+    /* JSON Highlighting */
+    --json-str: #a5d6ff;
+    --json-num: #79c0ff;
+    --json-bool: #ff7b72;
+    --json-null: #8b949e;
+    --json-key: #d2a8ff;
+    
+    /* Aurora */
+    --aurora-1: rgba(88, 166, 255, 0.15);
+    --aurora-2: rgba(210, 168, 255, 0.1);
+    --aurora-3: rgba(63, 185, 80, 0.1);
   }
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root.theme-light {
+    --bg: #f6f8fa;
+    --surface: rgba(255, 255, 255, 0.8);
+    --surface-hover: rgba(243, 244, 246, 0.9);
+    --border: rgba(208, 215, 222, 0.8);
+    --text-primary: #1f2328;
+    --text-secondary: #656d76;
+    --accent: #0969da;
+    --accent-glow: rgba(9, 105, 218, 0.15);
+    --success: #1a7f37;
+    --success-bg: rgba(26, 127, 55, 0.1);
+    --error: #cf222e;
+    --error-bg: rgba(207, 34, 46, 0.1);
+    
+    /* JSON Highlighting */
+    --json-str: #0a3069;
+    --json-num: #0550ae;
+    --json-bool: #cf222e;
+    --json-null: #656d76;
+    --json-key: #8250df;
+    
+    /* Aurora */
+    --aurora-1: rgba(9, 105, 218, 0.08);
+    --aurora-2: rgba(130, 80, 223, 0.05);
+    --aurora-3: rgba(26, 127, 55, 0.05);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; transition: background-color 0.3s, border-color 0.3s; }
   html { scroll-behavior: smooth; }
 
   body {
     background: var(--bg);
-    color: var(--cyan);
-    font-family: 'JetBrains Mono', monospace;
+    color: var(--text-primary);
+    font-family: 'Inter', sans-serif;
     min-height: 100vh;
     overflow-x: hidden;
-    margin: 0;
+    position: relative;
   }
 
-  /* ─── SCIFI BACKGROUND ─── */
-  .grid-bg {
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background-image: 
-      linear-gradient(rgba(0, 243, 255, 0.1) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(0, 243, 255, 0.1) 1px, transparent 1px);
-    background-size: 50px 50px;
-    transform: perspective(500px) rotateX(60deg) translateY(-100px) translateZ(-200px);
-    animation: gridMove 10s linear infinite;
-    z-index: -2;
-    mask-image: linear-gradient(to top, transparent 10%, black 80%);
-    -webkit-mask-image: linear-gradient(to top, transparent 10%, black 80%);
+  /* ─── AURORA BACKGROUND ─── */
+  .aurora-bg {
+    position: fixed; top: 0; left: 0; width: 100vw; height: 100vh;
+    z-index: -1; overflow: hidden; pointer-events: none;
+    background: var(--bg);
   }
-  @keyframes gridMove {
-    0% { background-position: 0 0; }
-    100% { background-position: 0 50px; }
+  .aurora-blob {
+    position: absolute; border-radius: 50%; filter: blur(80px);
+    animation: floatBlob 20s infinite alternate ease-in-out;
   }
+  .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: var(--aurora-1); animation-delay: 0s; }
+  .blob-2 { bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: var(--aurora-2); animation-delay: -5s; }
+  .blob-3 { top: 40%; left: 40%; width: 40vw; height: 40vw; background: var(--aurora-3); animation-delay: -10s; }
 
-  .scanlines {
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-    background-size: 100% 4px;
-    z-index: 1000;
-    pointer-events: none;
-    opacity: 0.4;
-  }
-  
-  .vignette {
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background: radial-gradient(circle, transparent 50%, #000 120%);
-    z-index: -1;
-    pointer-events: none;
-  }
-
-  /* ─── TYPOGRAPHY ─── */
-  h1, h2, h3, .hud-title {
-    font-family: 'Orbitron', sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 2px;
-    text-shadow: var(--text-glow);
+  @keyframes floatBlob {
+    0% { transform: translate(0, 0) scale(1); }
+    50% { transform: translate(10%, 15%) scale(1.1); }
+    100% { transform: translate(-5%, -10%) scale(0.9); }
   }
 
   /* ─── HEADER ─── */
   .header {
-    position: relative;
-    padding: 1.5rem 3rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    padding: 1.2rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
     border-bottom: 1px solid var(--border);
-    background: linear-gradient(180deg, rgba(0, 243, 255, 0.1) 0%, transparent 100%);
+    position: sticky; top: 0; z-index: 100;
   }
-  .header h1 {
-    font-size: 1.5rem;
-    color: #fff;
-    font-weight: 900;
+  .logo { display: flex; align-items: center; gap: 0.75rem; font-weight: 600; font-size: 1.1rem; }
+  .logo-icon { 
+    width: 28px; height: 28px; background: var(--accent); color: #fff;
+    display: flex; align-items: center; justify-content: center; border-radius: 6px;
+    font-family: 'Fira Code', monospace; font-size: 14px; font-weight: 800;
   }
-  .header h1 span { color: var(--cyan); }
-  .tagline {
-    font-size: 0.65rem;
-    color: var(--magenta);
-    letter-spacing: 1px;
-    text-shadow: 0 0 5px var(--magenta);
-    margin-top: 0.2rem;
+  .theme-toggle {
+    background: var(--surface); border: 1px solid var(--border); color: var(--text-primary);
+    width: 36px; height: 36px; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center;
+    font-size: 1.1rem; box-shadow: 0 2px 5px rgba(0,0,0,0.05);
   }
-  .header-badge {
-    font-size: 0.6rem;
-    padding: 0.4rem 1rem;
-    border: 1px solid var(--cyan);
-    color: var(--cyan);
-    background: var(--glass);
-    text-shadow: none;
-    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
-    display: flex; align-items: center; gap: 0.5rem;
-  }
-  .header-badge::before {
-    content: '';
-    width: 6px; height: 6px;
-    background: var(--green);
-    box-shadow: 0 0 8px var(--green);
-    animation: blink 1s steps(2, start) infinite;
-  }
-  @keyframes blink { to { visibility: hidden; } }
+  .theme-toggle:hover { background: var(--surface-hover); }
 
-  /* ─── HERO ─── */
-  .hero {
-    text-align: center;
-    padding: 4rem 2rem 2rem;
-    position: relative;
-  }
-  .hero h2 {
-    font-size: clamp(2rem, 5vw, 3.5rem);
-    color: #fff;
-    margin-bottom: 1rem;
-    line-height: 1.2;
-    animation: glitch 3s infinite;
-  }
-  @keyframes glitch {
-    0% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75), -0.025em 0.05em 0 rgba(0,0,255,0.75); }
-    14% { text-shadow: 0.05em 0 0 rgba(255,0,0,0.75), -0.05em -0.025em 0 rgba(0,255,0,0.75), -0.025em 0.05em 0 rgba(0,0,255,0.75); }
-    15% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.025em 0 rgba(0,255,0,0.75), -0.05em -0.05em 0 rgba(0,0,255,0.75); }
-    49% { text-shadow: -0.05em -0.025em 0 rgba(255,0,0,0.75), 0.025em 0.025em 0 rgba(0,255,0,0.75), -0.05em -0.05em 0 rgba(0,0,255,0.75); }
-    50% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,0,0.75), 0 -0.05em 0 rgba(0,0,255,0.75); }
-    99% { text-shadow: 0.025em 0.05em 0 rgba(255,0,0,0.75), 0.05em 0 0 rgba(0,255,0,0.75), 0 -0.05em 0 rgba(0,0,255,0.75); }
-    100% { text-shadow: -0.025em 0 0 rgba(255,0,0,0.75), -0.025em -0.025em 0 rgba(0,255,0,0.75), -0.025em -0.05em 0 rgba(0,0,255,0.75); }
-  }
-  .hero p {
-    color: rgba(255,255,255,0.6);
-    max-width: 600px;
-    margin: 0 auto;
-    font-size: 0.9rem;
-    line-height: 1.6;
-  }
-
-  /* ─── CONTAINER & HUD PANELS ─── */
-  .container {
-    max-width: 1000px;
-    margin: 0 auto;
-    padding: 0 2rem 4rem;
-    position: relative;
-    z-index: 10;
-  }
-
-  .hud-panel {
-    background: var(--glass);
-    border: 1px solid var(--border);
-    padding: 2rem;
-    margin-bottom: 2rem;
-    box-shadow: var(--panel-glow);
-    clip-path: polygon(0 0, calc(100% - 20px) 0, 100% 20px, 100% 100%, 20px 100%, 0 calc(100% - 20px));
-    position: relative;
-    transition: all 0.3s;
-  }
-  .hud-panel:focus-within {
-    border-color: var(--cyan);
-    box-shadow: inset 0 0 30px rgba(0, 243, 255, 0.15), 0 0 20px rgba(0, 243, 255, 0.2);
-  }
-
-  /* Corner accents */
-  .hud-panel::before, .hud-panel::after {
-    content: ''; position: absolute; width: 15px; height: 15px; border: 2px solid var(--cyan); pointer-events: none;
-  }
-  .hud-panel::before { top: 10px; left: 10px; border-right: none; border-bottom: none; }
-  .hud-panel::after { bottom: 10px; right: 10px; border-left: none; border-top: none; }
-
-  .hud-label {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.75rem;
-    color: var(--cyan);
-    margin-bottom: 1rem;
-    text-transform: uppercase;
-    display: flex; align-items: center; gap: 0.5rem;
-    text-shadow: var(--text-glow);
-  }
-  .hud-label::before { content: '>'; color: var(--magenta); }
-
-  /* ─── TEXTAREA ─── */
-  textarea {
-    width: 100%;
-    background: rgba(0,0,0,0.5);
-    border: 1px solid rgba(0, 243, 255, 0.2);
-    color: #fff;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.9rem;
-    padding: 1.5rem;
-    resize: vertical;
-    min-height: 120px;
-    outline: none;
-    transition: border-color 0.2s;
-  }
-  textarea:focus { border-color: var(--magenta); box-shadow: 0 0 15px rgba(188, 19, 254, 0.3); }
-
-  /* ─── BUTTONS ─── */
-  .hud-btn {
-    background: transparent;
-    border: 1px solid var(--cyan);
-    color: var(--cyan);
-    font-family: 'Orbitron', sans-serif;
-    font-size: 0.8rem;
+  /* ─── HERO & TYPEWRITER ─── */
+  .hero { text-align: center; padding: 5rem 1.5rem 3rem; }
+  
+  .typewriter-container {
+    font-size: clamp(2rem, 4.5vw, 3.5rem);
     font-weight: 700;
-    text-transform: uppercase;
-    padding: 1rem 2rem;
-    cursor: pointer;
-    transition: all 0.2s;
-    position: relative;
-    overflow: hidden;
-    clip-path: polygon(10px 0, 100% 0, 100% calc(100% - 10px), calc(100% - 10px) 100%, 0 100%, 0 10px);
+    letter-spacing: -1px;
+    margin-bottom: 1rem;
+    min-height: 4.5rem;
+    display: flex; justify-content: center; align-items: center;
   }
-  .hud-btn:hover {
-    background: var(--cyan);
-    color: #000;
-    box-shadow: 0 0 20px var(--cyan);
+  .typewriter-text {
+    background: linear-gradient(90deg, var(--text-primary), var(--text-secondary));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
   }
-  .hud-btn:disabled {
-    opacity: 0.5; border-color: var(--border); color: var(--border); cursor: not-allowed;
-    background: transparent; box-shadow: none;
+  .cursor {
+    display: inline-block; width: 0.5em; height: 1em; background: var(--accent);
+    margin-left: 0.2rem; vertical-align: middle; animation: blink 1s step-end infinite;
   }
+  @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+  .hero p { color: var(--text-secondary); font-size: 1.05rem; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+
+  /* ─── CONTAINER & GLASS PANELS ─── */
+  .container { max-width: 900px; margin: 0 auto; padding: 0 1.5rem 5rem; }
+
+  .panel {
+    background: var(--surface);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+    margin-bottom: 1.5rem;
+    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0; transform: translateY(20px);
+  }
+  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+  .panel-header {
+    font-size: 0.75rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;
+    color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;
+  }
+  .panel-header::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); }
+
+  /* ─── INPUT AREA ─── */
+  textarea {
+    width: 100%; background: transparent; border: 1px solid var(--border); border-radius: 8px;
+    color: var(--text-primary); font-family: 'Fira Code', monospace; font-size: 0.9rem;
+    padding: 1rem; min-height: 120px; resize: vertical; outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-glow); background: var(--surface-hover); }
+
+  .action-row { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; flex-wrap: wrap; gap: 1rem; }
   
-  .examples-row { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; align-items: center; }
-  .examples-row span { font-size: 0.6rem; color: var(--magenta); text-transform: uppercase; }
-  .example-btn {
-    background: transparent; border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.7);
-    font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; padding: 0.3rem 0.8rem; cursor: pointer;
-    transition: all 0.2s; clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+  .presets { display: flex; gap: 0.5rem; }
+  .preset-btn {
+    background: var(--bg); border: 1px solid var(--border); color: var(--text-secondary);
+    font-size: 0.75rem; padding: 0.4rem 0.8rem; border-radius: 6px; cursor: pointer; font-family: 'Inter', sans-serif;
   }
-  .example-btn:hover { border-color: var(--cyan); color: var(--cyan); }
-  
-  .input-bottom { display: flex; justify-content: space-between; align-items: flex-end; margin-top: 1rem; }
+  .preset-btn:hover { color: var(--text-primary); border-color: var(--text-secondary); }
+
+  .generate-btn {
+    background: var(--accent); color: #fff; border: none; font-weight: 600; font-family: 'Inter', sans-serif;
+    padding: 0.75rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 0.9rem;
+    display: flex; align-items: center; gap: 0.5rem; box-shadow: 0 4px 12px var(--accent-glow); transition: transform 0.1s, box-shadow 0.2s;
+  }
+  .generate-btn:hover { transform: translateY(-1px); box-shadow: 0 6px 16px var(--accent-glow); }
+  .generate-btn:active { transform: translateY(1px); }
+  .generate-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; box-shadow: none; }
 
   /* ─── PIPELINE STAGES ─── */
-  .pipeline {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 1rem;
-  }
+  .pipeline { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
   .stage {
-    background: rgba(0,0,0,0.6);
-    border: 1px solid var(--border);
-    padding: 1rem;
-    position: relative;
-    clip-path: polygon(0 0, calc(100% - 15px) 0, 100% 15px, 100% 100%, 15px 100%, 0 calc(100% - 15px));
+    border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center;
+    background: var(--bg); position: relative; overflow: hidden; transition: border-color 0.3s;
   }
-  .stage-num { font-size: 0.6rem; color: var(--magenta); margin-bottom: 0.5rem; font-family: 'Orbitron', sans-serif;}
-  .stage-name { font-size: 0.8rem; font-weight: bold; margin-bottom: 0.2rem; color: #fff;}
-  .stage-status { font-size: 0.65rem; color: var(--border); text-transform: uppercase; }
-  
-  .stage.active { border-color: var(--cyan); box-shadow: inset 0 0 15px rgba(0,243,255,0.2); }
-  .stage.active .stage-status { color: var(--cyan); animation: pulseText 1s infinite; }
-  
-  .stage.done { border-color: var(--green); }
-  .stage.done .stage-status { color: var(--green); }
-  
-  .stage.error { border-color: var(--red); box-shadow: inset 0 0 15px rgba(255,0,60,0.3); }
-  .stage.error .stage-status { color: var(--red); }
-  
-  @keyframes pulseText { 0%,100%{opacity:1} 50%{opacity:0.5} }
-  
-  .progress-bar {
-    height: 2px; width: 100%; background: #111; margin-top: 0.8rem; position: relative; overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%; width: 0%; background: var(--cyan); box-shadow: 0 0 10px var(--cyan); transition: width 0.3s;
-  }
-  .stage.active .progress-fill { width: 100%; transition: width 4s linear; }
-  .stage.done .progress-fill { width: 100%; background: var(--green); box-shadow: 0 0 10px var(--green); }
-  .stage.error .progress-fill { background: var(--red); box-shadow: 0 0 10px var(--red); }
+  .stage-icon { font-size: 1.2rem; margin-bottom: 0.5rem; opacity: 0.5; }
+  .stage-name { font-size: 0.75rem; font-weight: 600; margin-bottom: 0.25rem; color: var(--text-primary); }
+  .stage-status { font-size: 0.65rem; color: var(--text-secondary); font-family: 'Fira Code', monospace; }
+
+  .stage.active { border-color: var(--accent); }
+  .stage.active .stage-icon { opacity: 1; color: var(--accent); animation: pulse 2s infinite; }
+  .stage.active .stage-status { color: var(--accent); }
+  @keyframes pulse { 0%, 100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.6; transform: scale(0.95); } }
+
+  .stage.done { border-color: var(--success); }
+  .stage.done .stage-icon { opacity: 1; color: var(--success); }
+  .stage.done .stage-status { color: var(--success); }
+
+  .stage.error { border-color: var(--error); }
+  .stage.error .stage-icon { opacity: 1; color: var(--error); }
+  .stage.error .stage-status { color: var(--error); }
 
   /* ─── OUTPUT SECTION ─── */
-  .output-section { display: none; margin-top: 2rem; }
-  .output-section.show { display: block; animation: hudBoot 0.5s ease forwards; }
-  @keyframes hudBoot { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-  
-  .hud-tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border); padding-bottom: 0.5rem; overflow-x: auto; }
-  .hud-tab {
-    background: transparent; border: none; color: rgba(255,255,255,0.4); font-family: 'Orbitron', sans-serif;
-    font-size: 0.75rem; padding: 0.5rem 1rem; cursor: pointer; text-transform: uppercase;
+  .output-section { display: none; }
+  .output-section.show { display: block; animation: fadeUp 0.5s ease forwards; }
+
+  .tabs { display: flex; gap: 0.2rem; border-bottom: 1px solid var(--border); margin-bottom: 1rem; overflow-x: auto; }
+  .tab-btn {
+    background: transparent; border: none; padding: 0.6rem 1rem; font-size: 0.8rem; font-family: 'Fira Code', monospace;
+    color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
   }
-  .hud-tab.active { color: var(--cyan); text-shadow: var(--text-glow); border-bottom: 2px solid var(--cyan); }
-  .hud-tab:hover:not(.active) { color: #fff; }
+  .tab-btn:hover { color: var(--text-primary); background: var(--bg); border-radius: 6px 6px 0 0; }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
   .json-viewer {
-    background: rgba(0,0,0,0.8);
-    border: 1px solid var(--border);
-    padding: 1.5rem;
-    font-size: 0.8rem;
-    line-height: 1.5;
-    overflow-x: auto;
-    max-height: 500px;
-    color: #a8a8cc;
+    background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem;
+    font-family: 'Fira Code', monospace; font-size: 0.85rem; line-height: 1.6; color: var(--text-primary);
+    overflow-x: auto; max-height: 500px;
   }
-  
-  /* Syntax Highlighting */
-  .str { color: #a5d6ff; }
-  .num { color: #79c0ff; }
-  .bool { color: #ff7b72; font-weight: bold; }
-  .null { color: var(--border); font-style: italic; }
-  .key { color: var(--cyan); font-weight: 600; }
 
-  /* Stats Bar */
-  .stats-bar { display: flex; gap: 1rem; margin-bottom: 1rem; }
-  .stat-box { background: rgba(0,243,255,0.05); border: 1px solid rgba(0,243,255,0.2); padding: 0.8rem; flex: 1; text-align: center; clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px); }
-  .stat-val { font-size: 1.2rem; font-family: 'Orbitron', sans-serif; color: #fff; text-shadow: var(--text-glow); }
-  .stat-label { font-size: 0.55rem; color: var(--magenta); text-transform: uppercase; margin-top: 0.2rem; }
+  .str { color: var(--json-str); }
+  .num { color: var(--json-num); }
+  .bool { color: var(--json-bool); }
+  .null { color: var(--json-null); font-style: italic; }
+  .key { color: var(--json-key); }
 
-  /* Valid Report */
-  .valid-report { display: flex; gap: 0.5rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
-  .badge { font-size: 0.6rem; padding: 0.3rem 0.6rem; border: 1px solid; text-transform: uppercase; }
-  .badge.pass { border-color: var(--green); color: var(--green); background: rgba(0,255,0,0.05); }
-  .badge.warn { border-color: var(--magenta); color: var(--magenta); background: rgba(188,19,254,0.05); }
+  .stats-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+  .stat-card { flex: 1; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem; text-align: center; }
+  .stat-val { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); font-family: 'Fira Code', monospace; }
+  .stat-label { font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; margin-top: 0.25rem; font-weight: 600; }
 
-  /* Responsive */
-  @media (max-width: 800px) {
+  .badges { display: flex; gap: 0.5rem; margin-bottom: 1rem; flex-wrap: wrap; }
+  .badge { font-size: 0.7rem; padding: 0.25rem 0.6rem; border-radius: 12px; font-weight: 500; }
+  .badge.pass { background: var(--success-bg); color: var(--success); }
+  .badge.warn { background: var(--error-bg); color: var(--error); }
+  .badge.info { background: var(--accent-glow); color: var(--accent); }
+
+  @media (max-width: 768px) {
     .pipeline { grid-template-columns: repeat(2, 1fr); }
-    .input-bottom { flex-direction: column; align-items: stretch; gap: 1.5rem; }
+    .action-row { flex-direction: column; align-items: stretch; }
+    .generate-btn { justify-content: center; }
   }
 </style>
 </head>
 <body>
 
-<div class="grid-bg"></div>
-<div class="vignette"></div>
-<div class="scanlines"></div>
+<div class="aurora-bg">
+  <div class="aurora-blob blob-1"></div>
+  <div class="aurora-blob blob-2"></div>
+  <div class="aurora-blob blob-3"></div>
+</div>
 
 <header class="header">
-  <div style="display:flex; align-items:center; gap:1rem;">
-    <div style="width:30px; height:30px; border:2px solid var(--cyan); display:flex; align-items:center; justify-content:center; color:var(--cyan); font-family:Orbitron; box-shadow:var(--text-glow)">A</div>
-    <div>
-      <h1>APP<span>COMPILER</span></h1>
-      <div class="tagline">SYS.AUTH // NL_TO_JSON // V_1.0</div>
-    </div>
+  <div class="logo">
+    <div class="logo-icon">&lt;/&gt;</div>
+    AppCompiler
   </div>
-  <div class="header-badge">UPLINK ACTIVE</div>
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="Toggle Theme">🌙</button>
 </header>
 
 <div class="hero">
-  <h2>SYSTEM OVERRIDE<br>INITIALIZE COMPILER</h2>
-  <p>Input raw natural language syntax. System will execute a 4-stage neural extraction, design architecture, and output verified cross-layer JSON schematics.</p>
+  <div class="typewriter-container">
+    <span class="typewriter-text" id="typeText"></span><span class="cursor">█</span>
+  </div>
+  <p>Convert natural language product requirements into production-ready, cross-consistent JSON app schemas via a 4-stage AI pipeline.</p>
 </div>
 
 <div class="container">
   
-  <div class="hud-panel">
-    <div class="hud-label">Terminal Input</div>
-    <textarea id="prompt" placeholder="[WAITING FOR INPUT...]"></textarea>
+  <div class="panel" style="animation-delay: 0.2s">
+    <div class="panel-header">System Input</div>
+    <textarea id="prompt" placeholder="Write your prompt here or select a preset below..."></textarea>
     
-    <div class="input-bottom">
-      <div class="examples-row">
-        <span>PRESETS:</span>
-        <button class="example-btn" onclick="setExample('crm')">CRM</button>
-        <button class="example-btn" onclick="setExample('ecommerce')">STORE</button>
-        <button class="example-btn" onclick="setExample('jobboard')">JOBS</button>
+    <div class="action-row">
+      <div class="presets">
+        <button class="preset-btn" onclick="setPreset('crm')">CRM</button>
+        <button class="preset-btn" onclick="setPreset('ecommerce')">E-Commerce</button>
+        <button class="preset-btn" onclick="setPreset('dashboard')">Dashboard</button>
       </div>
-      <button class="hud-btn" id="genBtn" onclick="generate()">Execute Compilation</button>
+      <button class="generate-btn" id="genBtn" onclick="generate()">
+        <span id="genBtnIcon">▶</span>
+        <span id="genBtnText">Compile Schema</span>
+      </button>
     </div>
   </div>
 
-  <div class="hud-panel">
-    <div class="hud-label">Pipeline Diagnostics</div>
+  <div class="panel" style="animation-delay: 0.3s">
+    <div class="panel-header">Pipeline Diagnostics</div>
     <div class="pipeline">
       <div class="stage" id="s1">
-        <div class="stage-num">01</div>
-        <div class="stage-name">EXTRACT</div>
-        <div class="stage-status" id="s1-status">STANDBY</div>
-        <div class="progress-bar"><div class="progress-fill"></div></div>
+        <div class="stage-icon">🔍</div>
+        <div class="stage-name">Intent Extraction</div>
+        <div class="stage-status" id="s1-status">idle</div>
       </div>
       <div class="stage" id="s2">
-        <div class="stage-num">02</div>
-        <div class="stage-name">DESIGN</div>
-        <div class="stage-status" id="s2-status">STANDBY</div>
-        <div class="progress-bar"><div class="progress-fill"></div></div>
+        <div class="stage-icon">🏗</div>
+        <div class="stage-name">Architecture</div>
+        <div class="stage-status" id="s2-status">idle</div>
       </div>
       <div class="stage" id="s3">
-        <div class="stage-num">03</div>
-        <div class="stage-name">GENERATE</div>
-        <div class="stage-status" id="s3-status">STANDBY</div>
-        <div class="progress-bar"><div class="progress-fill"></div></div>
+        <div class="stage-icon">⚡</div>
+        <div class="stage-name">Generation</div>
+        <div class="stage-status" id="s3-status">idle</div>
       </div>
       <div class="stage" id="s4">
-        <div class="stage-num">04</div>
-        <div class="stage-name">VALIDATE</div>
-        <div class="stage-status" id="s4-status">STANDBY</div>
-        <div class="progress-bar"><div class="progress-fill"></div></div>
+        <div class="stage-icon">🛡</div>
+        <div class="stage-name">Validation</div>
+        <div class="stage-status" id="s4-status">idle</div>
       </div>
     </div>
   </div>
 
   <div class="output-section" id="outputSection">
-    <div class="hud-panel">
-      <div class="hud-label">System Output Report</div>
+    <div class="panel">
+      <div class="panel-header">Compilation Report</div>
       
-      <div class="valid-report" id="reportBadges"></div>
+      <div class="badges" id="reportBadges"></div>
       
-      <div class="stats-bar">
-        <div class="stat-box"><div class="stat-val" id="stat-pages">-</div><div class="stat-label">UI Pages</div></div>
-        <div class="stat-box"><div class="stat-val" id="stat-endpoints">-</div><div class="stat-label">API Routes</div></div>
-        <div class="stat-box"><div class="stat-val" id="stat-tables">-</div><div class="stat-label">DB Tables</div></div>
-        <div class="stat-box"><div class="stat-val" id="stat-roles">-</div><div class="stat-label">Auth Roles</div></div>
+      <div class="stats-row">
+        <div class="stat-card"><div class="stat-val" id="stat-pages">0</div><div class="stat-label">UI Pages</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-routes">0</div><div class="stat-label">API Routes</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-tables">0</div><div class="stat-label">DB Tables</div></div>
+        <div class="stat-card"><div class="stat-val" id="stat-roles">0</div><div class="stat-label">Auth Roles</div></div>
       </div>
 
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem; margin-top:2rem;">
-        <div class="hud-tabs">
-          <button class="hud-tab active" onclick="switchTab('all', this)">FULL_SCHEMA</button>
-          <button class="hud-tab" onclick="switchTab('ui', this)">UI_SCHEMA</button>
-          <button class="hud-tab" onclick="switchTab('api', this)">API_SCHEMA</button>
-          <button class="hud-tab" onclick="switchTab('db', this)">DB_SCHEMA</button>
-          <button class="hud-tab" onclick="switchTab('auth', this)">AUTH_SCHEMA</button>
+      <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom: 1px solid var(--border); margin-bottom:1rem;">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('all', this)">full_schema.json</button>
+          <button class="tab-btn" onclick="switchTab('ui', this)">ui.json</button>
+          <button class="tab-btn" onclick="switchTab('api', this)">api.json</button>
+          <button class="tab-btn" onclick="switchTab('db', this)">db.json</button>
         </div>
-        <div style="display:flex; gap:0.5rem;">
-          <button class="example-btn" id="copyBtn" onclick="copyJSON()">[ COPY ]</button>
-          <button class="example-btn" onclick="downloadJSON()">[ DOWNLOAD ]</button>
-        </div>
+        <button class="preset-btn" id="copyBtn" onclick="copyJSON()" style="margin-bottom:0.4rem;">Copy JSON</button>
       </div>
 
-      <pre class="json-viewer" id="jsonOut">// WAITING FOR DATA...</pre>
+      <pre class="json-viewer" id="jsonOut">// OUTPUT</pre>
     </div>
   </div>
 
 </div>
 
 <script>
+// ─── THEME TOGGLE ───
+const html = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+function toggleTheme() {
+  if (html.classList.contains('theme-dark')) {
+    html.classList.replace('theme-dark', 'theme-light');
+    themeToggle.textContent = '☀️';
+  } else {
+    html.classList.replace('theme-light', 'theme-dark');
+    themeToggle.textContent = '🌙';
+  }
+}
+
+// ─── TYPEWRITER EFFECT ───
+const typeText = "Describe your app.";
+const typeEl = document.getElementById('typeText');
+let charIdx = 0;
+function typeWriter() {
+  if (charIdx < typeText.length) {
+    typeEl.textContent += typeText.charAt(charIdx);
+    charIdx++;
+    setTimeout(typeWriter, Math.random() * 50 + 50);
+  }
+}
+document.addEventListener('DOMContentLoaded', () => { setTimeout(typeWriter, 500); });
+
+// ─── APP LOGIC ───
 const API_BASE = "https://appcompiler-cprb.onrender.com";
 let currentData = null;
 let currentTab = 'all';
 let stageTimers = [];
 
-function setExample(key) {
+function setPreset(key) {
   const ex = {
     crm: "Build a CRM with login, contacts, dashboard, role-based access, and premium plan with payments. Admins can see analytics.",
     ecommerce: "Create an e-commerce store with product listings, shopping cart, checkout, user profiles, and order history.",
-    jobboard: "Build a job board where employers post jobs, applicants apply, and admins manage categories and users."
+    dashboard: "Build a SaaS analytics dashboard showing user metrics, MRR, retention charts, and billing management."
   };
   document.getElementById('prompt').value = ex[key];
 }
@@ -455,45 +397,32 @@ function setStage(num, status, text) {
   statusEl.textContent = text;
 }
 
-function resetAll() {
-  [1,2,3,4].forEach(n => setStage(n, '', 'STANDBY'));
-  document.getElementById('outputSection').className = 'output-section';
-  document.getElementById('jsonOut').innerHTML = '// WAITING FOR DATA...';
-}
-
 function syntaxHighlight(json) {
-  if (typeof json != 'string') {
-     json = JSON.stringify(json, undefined, 2);
-  }
+  if (typeof json != 'string') json = JSON.stringify(json, undefined, 2);
   json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
     let cls = 'num';
-    if (/^"/.test(match)) {
-        if (/:$/.test(match)) cls = 'key';
-        else cls = 'str';
-    } else if (/true|false/.test(match)) {
-        cls = 'bool';
-    } else if (/null/.test(match)) {
-        cls = 'null';
-    }
+    if (/^"/.test(match)) { if (/:$/.test(match)) cls = 'key'; else cls = 'str'; }
+    else if (/true|false/.test(match)) { cls = 'bool'; }
+    else if (/null/.test(match)) { cls = 'null'; }
     return '<span class="' + cls + '">' + match + '</span>';
   });
 }
 
 function switchTab(tab, btnEl) {
   currentTab = tab;
-  document.querySelectorAll('.hud-tab').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   btnEl.classList.add('active');
   
   if (!currentData || !currentData.finalSchema) return;
   const s = currentData.finalSchema;
   let display;
   switch(tab) {
-    case 'ui':   display = s.uiSchema;   break;
-    case 'api':  display = s.apiSchema;  break;
-    case 'db':   display = s.dbSchema;   break;
+    case 'ui': display = s.uiSchema; break;
+    case 'api': display = s.apiSchema; break;
+    case 'db': display = s.dbSchema; break;
     case 'auth': display = s.authSchema; break;
-    default:     display = s;
+    default: display = s;
   }
   document.getElementById('jsonOut').innerHTML = syntaxHighlight(display);
 }
@@ -504,14 +433,16 @@ async function generate() {
 
   const btn = document.getElementById('genBtn');
   btn.disabled = true;
-  btn.textContent = 'EXECUTING...';
+  document.getElementById('genBtnIcon').textContent = '⏳';
+  document.getElementById('genBtnText').textContent = 'Compiling...';
 
-  resetAll();
+  [1,2,3,4].forEach(n => setStage(n, '', 'idle'));
+  document.getElementById('outputSection').className = 'output-section';
 
-  setStage(1, 'active', 'PROCESSING');
-  stageTimers.push(setTimeout(() => { setStage(1, 'done', 'COMPLETE'); setStage(2, 'active', 'PROCESSING'); }, 3500));
-  stageTimers.push(setTimeout(() => { setStage(2, 'done', 'COMPLETE'); setStage(3, 'active', 'PROCESSING'); }, 8000));
-  stageTimers.push(setTimeout(() => { setStage(3, 'done', 'COMPLETE'); setStage(4, 'active', 'PROCESSING'); }, 13000));
+  setStage(1, 'active', 'running');
+  stageTimers.push(setTimeout(() => { setStage(1, 'done', 'done'); setStage(2, 'active', 'running'); }, 3500));
+  stageTimers.push(setTimeout(() => { setStage(2, 'done', 'done'); setStage(3, 'active', 'running'); }, 8000));
+  stageTimers.push(setTimeout(() => { setStage(3, 'done', 'done'); setStage(4, 'active', 'running'); }, 13000));
 
   try {
     const res = await fetch(`${API_BASE}/generate`, {
@@ -522,29 +453,27 @@ async function generate() {
 
     stageTimers.forEach(t => clearTimeout(t));
     stageTimers = [];
-
     const data = await res.json();
 
     if (data.error) {
       const stageNum = data.stage || 4;
-      for (let i = 1; i < stageNum; i++) setStage(i, 'done', 'COMPLETE');
-      setStage(stageNum, 'error', 'FAILED');
-      document.getElementById('jsonOut').innerHTML = `<span class="red">SYS_ERROR: ${data.error}</span>`;
+      for (let i = 1; i < stageNum; i++) setStage(i, 'done', 'done');
+      setStage(stageNum, 'error', 'failed');
+      document.getElementById('jsonOut').innerHTML = `<span class="error">Error: ${data.error}</span>`;
       document.getElementById('outputSection').className = 'output-section show';
     } else {
-      [1,2,3,4].forEach(n => setStage(n, 'done', 'COMPLETE'));
+      [1,2,3,4].forEach(n => setStage(n, 'done', 'done'));
       currentData = data;
 
-      const badges = document.getElementById('reportBadges');
-      let html = '';
-      html += `<span class="badge ${data.validated ? 'pass' : 'warn'}">${data.validated ? '[OK] VALIDATED' : '[WARN] AUTO-REPAIRED'}</span>`;
-      html += `<span class="badge ${!data.issues?.length ? 'pass' : 'warn'}">${!data.issues?.length ? '[OK] ZERO_DEFECTS' : `[WARN] ${data.issues.length} FIXES_APPLIED`}</span>`;
-      html += `<span class="badge pass">[OK] JSON_STABLE</span>`;
-      badges.innerHTML = html;
+      let badgesHtml = '';
+      badgesHtml += `<span class="badge ${data.validated ? 'pass' : 'warn'}">${data.validated ? '✓ Validated' : '⚠ Repaired'}</span>`;
+      badgesHtml += `<span class="badge ${!data.issues?.length ? 'pass' : 'warn'}">${!data.issues?.length ? '✓ 0 Issues' : `⚠ ${data.issues.length} Fixes`}</span>`;
+      badgesHtml += `<span class="badge info">llama-3.3-70b</span>`;
+      document.getElementById('reportBadges').innerHTML = badgesHtml;
 
       const s = data.finalSchema || {};
       document.getElementById('stat-pages').textContent = s.uiSchema?.pages?.length ?? 0;
-      document.getElementById('stat-endpoints').textContent = s.apiSchema?.endpoints?.length ?? 0;
+      document.getElementById('stat-routes').textContent = s.apiSchema?.endpoints?.length ?? 0;
       document.getElementById('stat-tables').textContent = s.dbSchema?.tables?.length ?? 0;
       document.getElementById('stat-roles').textContent = s.authSchema?.roles?.length ?? 0;
 
@@ -554,55 +483,26 @@ async function generate() {
   } catch (e) {
     stageTimers.forEach(t => clearTimeout(t));
     stageTimers = [];
-    setStage(4, 'error', 'FAILED');
-    document.getElementById('jsonOut').innerHTML = `<span class="red">NET_ERROR: ${e.message}</span>`;
+    setStage(4, 'error', 'failed');
+    document.getElementById('jsonOut').innerHTML = `<span class="error">Network Error: ${e.message}</span>`;
     document.getElementById('outputSection').className = 'output-section show';
   }
 
   btn.disabled = false;
-  btn.textContent = 'EXECUTE COMPILATION';
+  document.getElementById('genBtnIcon').textContent = '▶';
+  document.getElementById('genBtnText').textContent = 'Compile Schema';
 }
 
 function copyJSON() {
   if (!currentData) return;
   const s = currentData.finalSchema;
-  let obj;
-  switch(currentTab) {
-    case 'ui':   obj = s.uiSchema;   break;
-    case 'api':  obj = s.apiSchema;  break;
-    case 'db':   obj = s.dbSchema;   break;
-    case 'auth': obj = s.authSchema; break;
-    default:     obj = s;
-  }
+  let obj = currentTab === 'all' ? s : s[currentTab + 'Schema'];
   navigator.clipboard.writeText(JSON.stringify(obj, null, 2)).then(() => {
     const btn = document.getElementById('copyBtn');
-    btn.textContent = '[ COPIED! ]';
-    setTimeout(() => btn.textContent = '[ COPY ]', 1500);
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy JSON', 1500);
   });
 }
-function downloadJSON() {
-  if (!currentData) return;
-  const blob = new Blob([JSON.stringify(currentData.finalSchema, null, 2)], { type: 'application/json' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = 'app-schema.json'; a.click(); URL.revokeObjectURL(url);
-}
-
-// Typewriter placeholder
-const placeholderText = "e.g., Build a CRM with login, contacts, dashboard, role-based access, and premium plan with payments. Admins can see analytics.";
-let typeIdx = 0;
-function typePlaceholder() {
-  const el = document.getElementById('prompt');
-  if (!el || el.value.length > 0) return;
-  if (typeIdx < placeholderText.length) {
-    el.setAttribute('placeholder', placeholderText.substring(0, typeIdx + 1) + "_");
-    typeIdx++;
-    setTimeout(typePlaceholder, Math.random() * 30 + 20);
-  } else {
-    el.setAttribute('placeholder', placeholderText);
-  }
-}
-document.addEventListener('DOMContentLoaded', () => { setTimeout(typePlaceholder, 500); });
 </script>
 </body>
 </html>
