@@ -575,6 +575,23 @@
     .pipeline { grid-template-columns: repeat(2, 1fr); }
     .input-bottom { flex-direction: column; }
   }
+  /* ─── ANIMATIONS ─── */
+  @keyframes fadeUp {
+    0% { opacity: 0; transform: translateY(20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  .animate-fade-up {
+    animation: fadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+  }
+  @keyframes pulseGlow {
+    0% { box-shadow: 0 0 0 0 var(--accent-glow); }
+    70% { box-shadow: 0 0 0 15px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
+  .animate-pulse-glow {
+    animation: pulseGlow 2.5s infinite;
+  }
 </style>
 </head>
 <body class="bg-noise">
@@ -592,7 +609,7 @@
 </header>
 
 <!-- ─── HERO ─── -->
-<div class="hero">
+<div class="hero animate-fade-up" style="animation-delay: 0.1s">
   <div class="hero-eyebrow">⚡ AI-Powered Schema Generation</div>
   <h2>Describe your app.<br>Get production-ready JSON.</h2>
   <p>AppCompiler runs your description through a 4-stage AI pipeline — intent extraction, system design, schema generation, and validation — producing structured, cross-consistent configuration.</p>
@@ -602,7 +619,7 @@
 <div class="container">
 
   <!-- Input -->
-  <div class="input-card">
+  <div class="input-card animate-fade-up" style="animation-delay: 0.3s">
     <div class="field-label">
       <span class="field-label-dot"></span>
       Product Description
@@ -619,7 +636,7 @@
         <button class="example-btn" onclick="setExample('healthcare')" id="ex-healthcare">Healthcare</button>
         <button class="example-btn" onclick="setExample('vague')" id="ex-vague">Edge Case</button>
       </div>
-      <button class="generate-btn" id="genBtn" onclick="generate()">
+      <button class="generate-btn animate-fade-up animate-pulse-glow" id="genBtn" onclick="generate()" style="animation-delay: 0.5s">
         <span id="genBtnIcon">⚙</span>
         <span id="genBtnText">Compile App Schema</span>
       </button>
@@ -627,7 +644,7 @@
   </div>
 
   <!-- Pipeline Stages -->
-  <div class="pipeline-container">
+  <div class="pipeline-container animate-fade-up" style="animation-delay: 0.6s">
     <div class="pipeline-header">
       <span>▸</span> Pipeline Execution
     </div>
@@ -931,6 +948,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') generate();
   });
 });
+// Typewriter effect for textarea placeholder
+const placeholderText = "e.g., Build a CRM with login, contacts, dashboard, role-based access, and premium plan with payments. Admins can see analytics.";
+let typeIdx = 0;
+function typePlaceholder() {
+  const el = document.getElementById('prompt');
+  if (!el || el.value.length > 0) return; // Stop if user starts typing
+  if (typeIdx < placeholderText.length) {
+    el.setAttribute('placeholder', placeholderText.substring(0, typeIdx + 1));
+    typeIdx++;
+    setTimeout(typePlaceholder, Math.random() * 40 + 30);
+  }
+}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('prompt').setAttribute('placeholder', '');
+  setTimeout(typePlaceholder, 1000);
+});
+
 </script>
 </body>
 </html>
