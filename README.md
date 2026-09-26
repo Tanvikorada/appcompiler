@@ -114,7 +114,7 @@ Results saved to `evaluation_results.json` with:
 Stage 4 performs **targeted repair** — not full retry. It identifies specific inconsistencies (missing keys, broken table references, unknown auth roles) and asks the model to fix only those issues. This is faster, cheaper, and avoids re-introducing new errors.
 
 ### Model Choice
-`llama-3.3-70b-versatile` on Groq's free tier:
+`openai/gpt-oss-120b` on Groq (fallback `openai/gpt-oss-20b`), overridable via `GROQ_MODEL` / `GROQ_FALLBACK_MODEL`:
 - ~3–5s per stage
 - Excellent JSON instruction-following
 - ~5,000 tokens total per request ≈ $0.0003 on paid tier (free on free tier)

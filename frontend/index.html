@@ -480,7 +480,7 @@ async function generate() {
       let badgesHtml = '';
       badgesHtml += `<span class="badge ${data.validated ? 'pass' : 'warn'}">${data.validated ? '✓ Validated' : '⚠ Repaired'}</span>`;
       badgesHtml += `<span class="badge ${!data.issues?.length ? 'pass' : 'warn'}">${!data.issues?.length ? '✓ 0 Issues' : `⚠ ${data.issues.length} Fixes`}</span>`;
-      badgesHtml += `<span class="badge info">llama-3.3-70b</span>`;
+      badgesHtml += `<span class="badge info">gpt-oss-120b</span>`;
       document.getElementById('reportBadges').innerHTML = badgesHtml;
 
       const s = data.finalSchema || {};

@@ -5,10 +5,23 @@ def stage4_validation_and_repair(schema: dict) -> dict:
     from pipeline import call_groq, extract_json
     issues = []
 
+    if not isinstance(schema, dict):
+        return {"validated": False, "issues": ["Schema is not a JSON object"], "schema": schema, "repaired": False}
+
+    def section(key: str) -> dict:
+        val = schema.get(key)
+        return val if isinstance(val, dict) else {}
+
+    def dict_items(val) -> list:
+        # Models sometimes return a dict keyed by name instead of a list
+        if isinstance(val, dict):
+            val = list(val.values())
+        return [v for v in val if isinstance(v, dict)] if isinstance(val, list) else []
+
     # Check 1: Required top-level keys
     required_keys = ["uiSchema", "apiSchema", "dbSchema", "authSchema"]
     for key in required_keys:
-        if key not in schema:
+        if not isinstance(schema.get(key), dict):
             issues.append(f"MISSING KEY: {key}")
 
     if len(issues) == len(required_keys):
@@ -16,35 +29,26 @@ def stage4_validation_and_repair(schema: dict) -> dict:
         return {"validated": False, "issues": issues, "schema": schema, "repaired": False}
 
     # Check 2: API endpoints reference valid DB tables
-    db_tables = []
-    if "dbSchema" in schema and "tables" in schema["dbSchema"]:
-        db_tables = [t["name"] for t in schema["dbSchema"]["tables"]]
+    db_tables = [t.get("name") for t in dict_items(section("dbSchema").get("tables"))]
 
-    api_endpoints = []
-    if "apiSchema" in schema and "endpoints" in schema["apiSchema"]:
-        api_endpoints = schema["apiSchema"]["endpoints"]
-
-    for ep in api_endpoints:
-        if "dbTable" in ep and ep["dbTable"] and ep["dbTable"] not in db_tables:
+    for ep in dict_items(section("apiSchema").get("endpoints")):
+        table = ep.get("dbTable")
+        if table and isinstance(table, str) and table not in db_tables:
             issues.append(
-                f"API endpoint {ep.get('path')} references non-existent table '{ep['dbTable']}'"
+                f"API endpoint {ep.get('path')} references non-existent table '{table}'"
             )
 
     # Check 3: Auth roles consistent
-    auth_roles = []
-    if "authSchema" in schema and "roles" in schema["authSchema"]:
-        auth_roles = schema["authSchema"]["roles"]
+    auth_roles = section("authSchema").get("roles")
+    if not isinstance(auth_roles, list):
+        auth_roles = []
 
-    if "uiSchema" in schema and "pages" in schema["uiSchema"]:
-        for page in schema["uiSchema"]["pages"]:
-            if (
-                page.get("requiredRole")
-                and page["requiredRole"] not in auth_roles
-                and page["requiredRole"] != "null"
-            ):
-                issues.append(
-                    f"Page '{page.get('name')}' requires role '{page.get('requiredRole')}' not in authSchema roles"
-                )
+    for page in dict_items(section("uiSchema").get("pages")):
+        role = page.get("requiredRole")
+        if role and role != "null" and role not in auth_roles:
+            issues.append(
+                f"Page '{page.get('name')}' requires role '{role}' not in authSchema roles"
+            )
 
     # If issues found → attempt repair
     if issues:
@@ -60,6 +64,8 @@ Original schema:
         try:
             raw = call_groq(repair_prompt)
             repaired_schema = extract_json(raw)
+            if not isinstance(repaired_schema, dict) or not all(isinstance(repaired_schema.get(k), dict) for k in required_keys):
+                raise ValueError("Repair returned an incomplete schema")
             return {
                 "validated": False,
                 "issues": issues,

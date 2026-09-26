@@ -8,8 +8,8 @@ from dotenv import load_dotenv
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
-PRIMARY_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-FALLBACK_MODEL = os.getenv("GROQ_FALLBACK_MODEL", "llama-3.1-8b-instant")
+PRIMARY_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+FALLBACK_MODEL = os.getenv("GROQ_FALLBACK_MODEL", "openai/gpt-oss-20b")
 
 _use_fallback_directly = False
 
@@ -19,8 +19,9 @@ def _complete(model: str, prompt: str) -> str:
         model=model,
         messages=[{"role": "user", "content": prompt}],
         temperature=0.2,
-        max_tokens=4000,
+        max_tokens=8000,
         response_format={"type": "json_object"},
+        **({"reasoning_effort": "low"} if model.startswith("openai/gpt-oss") else {}),
     )
     return response.choices[0].message.content
 
