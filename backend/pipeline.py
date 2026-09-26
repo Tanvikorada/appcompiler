@@ -2,48 +2,42 @@ import os
 import json
 import re
 # pyrefly: ignore [missing-import]
-from groq import Groq, RateLimitError
+from groq import Groq, RateLimitError, NotFoundError, PermissionDeniedError
 from dotenv import load_dotenv
 
 load_dotenv()
 client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 
+PRIMARY_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+FALLBACK_MODEL = os.getenv("GROQ_FALLBACK_MODEL", "openai/gpt-oss-20b")
 
 _use_fallback_directly = False
+
+
+def _complete(model: str, prompt: str) -> str:
+    response = client.chat.completions.create(
+        model=model,
+        messages=[{"role": "user", "content": prompt}],
+        temperature=0.2,
+        max_tokens=8000,
+        response_format={"type": "json_object"},
+        **({"reasoning_effort": "low"} if model.startswith("openai/gpt-oss") else {}),
+    )
+    return response.choices[0].message.content
 
 
 def call_groq(prompt: str) -> str:
     global _use_fallback_directly
     if _use_fallback_directly:
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-            max_tokens=4000,
-            response_format={"type": "json_object"},
-        )
-        return response.choices[0].message.content
+        return _complete(FALLBACK_MODEL, prompt)
 
     try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-            max_tokens=4000,
-            response_format={"type": "json_object"},
-        )
-        return response.choices[0].message.content
-    except RateLimitError as e:
-        print(f"Rate limit hit for llama-3.3-70b-versatile. Falling back to llama-3.1-8b-instant. Error: {e}")
+        return _complete(PRIMARY_MODEL, prompt)
+    except (RateLimitError, NotFoundError, PermissionDeniedError) as e:
+        # Rate limit, or the key has no access to the primary model (404/403)
+        print(f"{PRIMARY_MODEL} unavailable. Falling back to {FALLBACK_MODEL}. Error: {e}")
         _use_fallback_directly = True
-        response = client.chat.completions.create(
-            model="llama-3.1-8b-instant",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2,
-            max_tokens=4000,
-            response_format={"type": "json_object"},
-        )
-        return response.choices[0].message.content
+        return _complete(FALLBACK_MODEL, prompt)
 
 
 def extract_json(text: str) -> dict:
