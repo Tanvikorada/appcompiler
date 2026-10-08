@@ -1,6 +1,7 @@
 import os
 import json
 import re
+import time
 # pyrefly: ignore [missing-import]
 from groq import Groq, RateLimitError, NotFoundError, PermissionDeniedError
 from dotenv import load_dotenv
@@ -11,7 +12,9 @@ client = Groq(api_key=os.getenv("GROQ_API_KEY"))
 PRIMARY_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
 FALLBACK_MODEL = os.getenv("GROQ_FALLBACK_MODEL", "openai/gpt-oss-20b")
 
-_use_fallback_directly = False
+# Unix time until which calls skip the primary model (inf = permanently)
+_fallback_until = 0.0
+RATE_LIMIT_COOLDOWN = 60
 
 
 def _complete(model: str, prompt: str) -> str:
@@ -27,16 +30,21 @@ def _complete(model: str, prompt: str) -> str:
 
 
 def call_groq(prompt: str) -> str:
-    global _use_fallback_directly
-    if _use_fallback_directly:
+    global _fallback_until
+    if time.time() < _fallback_until:
         return _complete(FALLBACK_MODEL, prompt)
 
     try:
         return _complete(PRIMARY_MODEL, prompt)
-    except (RateLimitError, NotFoundError, PermissionDeniedError) as e:
-        # Rate limit, or the key has no access to the primary model (404/403)
-        print(f"{PRIMARY_MODEL} unavailable. Falling back to {FALLBACK_MODEL}. Error: {e}")
-        _use_fallback_directly = True
+    except RateLimitError as e:
+        # Temporary: retry the primary model after the cooldown
+        print(f"{PRIMARY_MODEL} rate limited. Using {FALLBACK_MODEL} for {RATE_LIMIT_COOLDOWN}s. Error: {e}", flush=True)
+        _fallback_until = time.time() + RATE_LIMIT_COOLDOWN
+        return _complete(FALLBACK_MODEL, prompt)
+    except (NotFoundError, PermissionDeniedError) as e:
+        # The key has no access to the primary model; it won't come back
+        print(f"{PRIMARY_MODEL} unavailable. Falling back to {FALLBACK_MODEL}. Error: {e}", flush=True)
+        _fallback_until = float("inf")
         return _complete(FALLBACK_MODEL, prompt)
 
 
